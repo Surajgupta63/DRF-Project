@@ -1,13 +1,18 @@
 from django.shortcuts import render, get_object_or_404
 from students.models import Student
 from employees.models import Employee
+from blogs.models import Blog, Comment
 from .serializers import StudentSerializer, EmployeeSerializer
+from blogs.serializers import BlogSerializer, CommentSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import mixins, generics, viewsets
+from .paginations import CustomPagination
+from .filters import EmployeeFilter
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 # Create your views here.
 ## Manualy Data Serialization
@@ -130,13 +135,13 @@ class EmployeeDetails(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins
         return self.destroy(request, pk)
 """
 
-## Generics View to perform CRUD
+## Class Based Generics View to perform CRUD
 """
 class Employees(generics.ListCreateAPIView):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
 
-## Generics View to perform CRUD
+## Class Based Generics View to perform CRUD
 class EmployeeDetails(generics.RetrieveUpdateDestroyAPIView):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
@@ -181,3 +186,29 @@ class EmployeeViewset(viewsets.ViewSet):
 class EmployeeViewset(viewsets.ModelViewSet):
     queryset = Employee.objects.all()
     serializer_class = EmployeeSerializer
+    pagination_class = CustomPagination
+    # filterset_fields = ['emp_designation']
+    filterset_class = EmployeeFilter
+
+
+## For Blogs
+class BlogsView(generics.ListCreateAPIView):
+    queryset = Blog.objects.all()
+    serializer_class = BlogSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ['^blog_title', 'blog_body']
+    ordering_fields = ['id', 'blog_title']
+
+class CommentsView(generics.ListCreateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+class BlogDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Blog.objects.all()
+    serializer_class = BlogSerializer
+    lookup_field = 'pk'
+
+class CommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    lookup_field = 'pk'
